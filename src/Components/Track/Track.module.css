@@ -35,3 +35,38 @@
     font-weight: 300;
     color: rgba(256, 256, 256, 0.8);
 }
+
+.Track-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.Track-player button {
+  background-color: #1db954; /* Verde Spotify */
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.Track-player button:hover {
+  background-color: #1ed760;
+}
+
+.Track-player audio {
+  flex: 1;
+  outline: none;
+  border-radius: 4px;
+}
+
+/* Opcional: mensagem de sem prévia */
+.Track-information p.no-preview {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 4px;
+}

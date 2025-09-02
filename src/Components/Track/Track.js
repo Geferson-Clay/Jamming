@@ -1,42 +1,58 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import styles from "./Track.module.css";
 
-function Track(props) {
-  function renderAction() {
-    if (props.isRemoval) {
-      return (
-        <button className={styles["Track-action"]} onClick={passTrackToRemove}>
-          -
-        </button>
-      );
-    } else {
-      return (
-        <button className={styles["Track-action"]} onClick={passTrack}>
-          +
-        </button>
-      );
-    }
+function Track({ track, onAdd, onRemove, isRemoval }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  function togglePlay() {
+    if (!audioRef.current) return;
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play();
+    setIsPlaying(!isPlaying);
   }
 
-  function passTrack() {
-    props.onAdd(props.track);
+  function addTrack() {
+    onAdd(track);
   }
 
-  function passTrackToRemove() {
-    props.onRemove(props.track);
+  function removeTrack() {
+    onRemove(track);
   }
+
   return (
     <div className={styles.Track}>
       <div className={styles["Track-information"]}>
-        {/* <h3><!-- track name will go here --></h3> */}
-        <h3>{props.track.name}</h3>
-        {/* <p><!-- track artist will go here--> | <!-- track album will go here --></p> */}
-        <p>
-          {props.track.artist} | {props.track.album}
-        </p>
+        <h3>{track.name}</h3>
+        <p>{track.artist} | {track.album}</p>
+
+        {track.previewUrl ? (
+  <div className={styles["Track-player"]}>
+    <button onClick={togglePlay}>
+      {isPlaying ? "⏸️ Pause" : "▶️ Play"}
+    </button>
+    <audio
+      ref={audioRef}
+      src={track.previewUrl}
+      onEnded={() => setIsPlaying(false)}
+    />
+  </div>
+) : (
+  <p className={styles["no-preview"]}>Sem prévia disponível</p>
+)}
+
+            
       </div>
-      {/* <button class="Track-action"><!-- + or - will go here --></button> */}
-      {renderAction()}
+
+      {isRemoval ? (
+        <button className={styles["Track-action"]} onClick={removeTrack}>
+          -
+        </button>
+      ) : (
+        <button className={styles["Track-action"]} onClick={addTrack}>
+          +
+        </button>
+      )}
     </div>
   );
 }

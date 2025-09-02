@@ -1,12 +1,13 @@
 let accessToken = "";
 const clientID = "c9c0e86df6c64b12b93e0f5264f18deb";
-const redirectUrl = "http://127.0.0.1:3000";
+const redirectUrl = "https://geffjammmingproject.surge.sh";
 const scope = "playlist-modify-public user-read-private user-read-email";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
 
 // ===== Helpers =====
 const generateRandomString = (length) => {
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const values = window.crypto.getRandomValues(new Uint8Array(length));
   return values.reduce((acc, x) => acc + possible[x % possible.length], "");
 };
@@ -27,17 +28,22 @@ const base64encode = (input) => {
 // ===== Spotify Object =====
 const Spotify = {
   async getAccessToken() {
-    if (accessToken) return accessToken;
+    const storedToken = localStorage.getItem("access_token");
+    const expiresAt = localStorage.getItem("expires_at");
+
+    if (storedToken && Date.now() < expiresAt) {
+      accessToken = storedToken;
+      return accessToken;
+    }
 
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
-    // Se já veio com um "code", troca por token
     if (code) {
       return await this.fetchToken(code);
     }
 
-    // Se não tem "code", inicia login
+    // inicia login PKCE
     const codeVerifier = generateRandomString(64);
     localStorage.setItem("code_verifier", codeVerifier);
 
@@ -76,7 +82,9 @@ const Spotify = {
 
     if (data.access_token) {
       accessToken = data.access_token;
-      window.setTimeout(() => (accessToken = ""), data.expires_in * 1000);
+      const expiresAt = Date.now() + data.expires_in * 1000;
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("expires_at", expiresAt);
       window.history.pushState({}, document.title, "/"); // limpa URL
       return accessToken;
     } else {
@@ -88,20 +96,25 @@ const Spotify = {
     const token = await this.getAccessToken();
 
     const response = await fetch(
-      `https://api.spotify.com/v1/search?type=track&q=${encodeURIComponent(term)}`,
+      `https://api.spotify.com/v1/search?type=track&q=${encodeURIComponent(
+        term
+      )}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
     const json = await response.json();
     if (!json.tracks) return [];
 
-    return json.tracks.items.map((t) => ({
-      id: t.id,
-      name: t.name,
-      artist: t.artists[0].name,
-      album: t.album.name,
-      uri: t.uri,
-    }));
+    return json.tracks.items
+      .filter((t) => t.preview_url) // só tracks com preview
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        artist: t.artists[0].name,
+        album: t.album.name,
+        uri: t.uri,
+        previewUrl: t.preview_url,
+      }));
   },
 
   async savePlaylist(name, trackUris) {
@@ -110,11 +123,9 @@ const Spotify = {
     const token = await this.getAccessToken();
     const header = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
-    // pega usuário
     const userResponse = await fetch("https://api.spotify.com/v1/me", { headers: header });
     const userId = (await userResponse.json()).id;
 
-    // cria playlist
     const playlistResponse = await fetch(
       `https://api.spotify.com/v1/users/${userId}/playlists`,
       {
@@ -126,7 +137,6 @@ const Spotify = {
 
     const playlistId = (await playlistResponse.json()).id;
 
-    // adiciona músicas
     return fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
       method: "POST",
       headers: header,
@@ -135,4 +145,4 @@ const Spotify = {
   },
 };
 
-export default Spotify ;
+export default Spotify;
