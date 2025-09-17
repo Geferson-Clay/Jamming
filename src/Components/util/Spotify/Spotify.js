@@ -1,6 +1,6 @@
 let accessToken = "";
 const clientID = "c9c0e86df6c64b12b93e0f5264f18deb";
-const redirectUrl = "https://localhost:3001/";
+const redirectUrl = "https://geffjammmingproject.surge.sh/";
 const scope = "playlist-modify-public user-read-private user-read-email";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
 
